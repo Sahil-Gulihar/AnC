@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Active Noise Cancellation (ANC) Web Tool</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding: 20px;
+      }
+
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+      }
+
+      .header {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        color: white;
+        padding: 30px;
+        text-align: center;
+      }
+
+      .header h1 {
+        font-size: 2.5rem;
+        margin-bottom: 10px;
+      }
+
+      .header p {
+        font-size: 1.1rem;
+        opacity: 0.9;
+      }
+
+      .main-content {
+        padding: 40px;
+      }
+
+      .upload-section {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 30px;
+        margin-bottom: 30px;
+        border: 2px dashed #dee2e6;
+        transition: all 0.3s ease;
+      }
+
+      .upload-section:hover {
+        border-color: #4facfe;
+        background: #f0f8ff;
+      }
+
+      .upload-area {
+        text-align: center;
+      }
+
+      .file-input-wrapper {
+        position: relative;
+        display: inline-block;
+        margin: 20px 0;
+      }
+
+      .file-input {
+        position: absolute;
+        opacity: 0;
+        width: 100%;
+        height: 100%;
+        cursor: pointer;
+      }
+
+      .file-input-button {
+        display: inline-block;
+        padding: 15px 30px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 25px;
+        font-size: 1.1rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        border: none;
+      }
+
+      .file-input-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+      }
+
+      .controls {
+        display: flex;
+        gap: 20px;
+        align-items: center;
+        justify-content: center;
+        margin: 20px 0;
+        flex-wrap: wrap;
+      }
+
+      .control-group {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .control-group label {
+        font-weight: 600;
+        margin-bottom: 5px;
+        color: #333;
+      }
+
+      .mix-ratio-slider {
+        width: 200px;
+        height: 6px;
+        border-radius: 3px;
+        background: #ddd;
+        outline: none;
+        appearance: none;
+      }
+
+      .mix-ratio-slider::-webkit-slider-thumb {
+        appearance: none;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: #4facfe;
+        cursor: pointer;
+      }
+
+      .process-button {
+        background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+        color: white;
+        border: none;
+        padding: 15px 30px;
+        border-radius: 25px;
+        font-size: 1.1rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        disabled: false;
+      }
+
+      .process-button:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+      }
+
+      .process-button:disabled {
+        background: #ccc;
+        cursor: not-allowed;
+      }
+
+      .loading {
+        display: none;
+        text-align: center;
+        padding: 20px;
+      }
+
+      .spinner {
+        border: 4px solid #f3f3f3;
+        border-top: 4px solid #4facfe;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        animation: spin 1s linear infinite;
+        margin: 0 auto 10px;
+      }
+
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+
+      .results {
+        display: none;
+        margin-top: 30px;
+      }
+
+      .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+        margin: 20px 0;
+      }
+
+      .stat-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 20px;
+        border-radius: 10px;
+        text-align: center;
+      }
+
+      .stat-value {
+        font-size: 2rem;
+        font-weight: bold;
+        margin-bottom: 5px;
+      }
+
+      .stat-label {
+        font-size: 0.9rem;
+        opacity: 0.9;
+      }
+
+      .plots {
+        margin: 30px 0;
+      }
+
+      .plot-container {
+        margin: 20px 0;
+        text-align: center;
+      }
+
+      .plot-container img {
+        max-width: 100%;
+        height: auto;
+        border-radius: 10px;
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+      }
+
+      .downloads {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 20px;
+        margin: 20px 0;
+      }
+
+      .download-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 15px;
+      }
+
+      .download-card {
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        text-align: center;
+      }
+
+      .download-button {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        text-decoration: none;
+        padding: 10px 20px;
+        border-radius: 5px;
+        display: inline-block;
+        margin-top: 10px;
+        transition: all 0.3s ease;
+      }
+
+      .download-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+      }
+
+      .error {
+        background: #ff6b6b;
+        color: white;
+        padding: 15px;
+        border-radius: 5px;
+        margin: 20px 0;
+        display: none;
+      }
+
+      .file-info {
+        background: #e3f2fd;
+        padding: 15px;
+        border-radius: 5px;
+        margin: 15px 0;
+        display: none;
+      }
+
+      @media (max-width: 768px) {
+        .header h1 {
+          font-size: 2rem;
+        }
+
+        .main-content {
+          padding: 20px;
+        }
+
+        .controls {
+          flex-direction: column;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>🎵 Active Noise Cancellation</h1>
+        <p>
+          Upload an audio file to generate anti-sound and cleaned audio using
+          180° phase shift
+        </p>
+      </div>
+
+      <div class="main-content">
+        <div class="upload-section">
+          <div class="upload-area">
+            <h3>Upload Audio File</h3>
+            <p>Supported formats: WAV, MP3, FLAC, OGG, M4A, AAC</p>
+
+            <div class="file-input-wrapper">
+              <input
+                type="file"
+                id="audioFile"
+                class="file-input"
+                accept=".wav,.mp3,.flac,.ogg,.m4a,.aac"
+              />
+              <button class="file-input-button">Choose Audio File</button>
+            </div>
+
+            <div class="file-info" id="fileInfo"></div>
+
+            <div class="controls">
+              <div class="control-group">
+                <label for="mixRatio"
+                  >ANC Mix Ratio: <span id="mixRatioValue">0.8</span></label
+                >
+                <input
+                  type="range"
+                  id="mixRatio"
+                  class="mix-ratio-slider"
+                  min="0"
+                  max="1"
+                  step="0.1"
+                  value="0.8"
+                />
+              </div>
+
+              <button id="processButton" class="process-button" disabled>
+                Process Audio
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="error" id="errorMessage"></div>
+
+        <div class="loading" id="loading">
+          <div class="spinner"></div>
+          <p>Processing audio... This may take a few moments.</p>
+        </div>
+
+        <div class="results" id="results">
+          <h3>Processing Results</h3>
+
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-value" id="duration">-</div>
+              <div class="stat-label">Duration (seconds)</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value" id="sampleRate">-</div>
+              <div class="stat-label">Sample Rate (Hz)</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value" id="originalRms">-</div>
+              <div class="stat-label">Original RMS</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value" id="cleanedRms">-</div>
+              <div class="stat-label">Cleaned RMS</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value" id="noiseReduction">-</div>
+              <div class="stat-label">Noise Reduction (dB)</div>
+            </div>
+          </div>
+
+          <div class="plots">
+            <div class="plot-container">
+              <h4>Waveform Analysis</h4>
+              <img id="waveformPlot" src="" alt="Waveform Plot" />
+            </div>
+
+            <div class="plot-container">
+              <h4>Frequency Analysis</h4>
+              <img id="frequencyPlot" src="" alt="Frequency Plot" />
+            </div>
+          </div>
+
+          <div class="downloads">
+            <h4>Download Processed Audio</h4>
+            <div class="download-grid">
+              <div class="download-card">
+                <h5>🔊 Anti-Sound</h5>
+                <p>180° phase-shifted version for noise cancellation</p>
+                <a
+                  id="downloadAntiSound"
+                  class="download-button"
+                  href="#"
+                  download
+                  >Download</a
+                >
+              </div>
+              <div class="download-card">
+                <h5>✨ Cleaned Audio</h5>
+                <p>Result after applying ANC processing</p>
+                <a
+                  id="downloadCleaned"
+                  class="download-button"
+                  href="#"
+                  download
+                  >Download</a
+                >
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const audioFile = document.getElementById("audioFile");
+      const fileInfo = document.getElementById("fileInfo");
+      const mixRatio = document.getElementById("mixRatio");
+      const mixRatioValue = document.getElementById("mixRatioValue");
+      const processButton = document.getElementById("processButton");
+      const loading = document.getElementById("loading");
+      const results = document.getElementById("results");
+      const errorMessage = document.getElementById("errorMessage");
+
+      // Update mix ratio display
+      mixRatio.addEventListener("input", function () {
+        mixRatioValue.textContent = this.value;
+      });
+
+      // Handle file selection
+      audioFile.addEventListener("change", function () {
+        if (this.files && this.files[0]) {
+          const file = this.files[0];
+          const fileSize = (file.size / (1024 * 1024)).toFixed(2);
+
+          fileInfo.innerHTML = `
+                    <strong>Selected:</strong> ${file.name}<br>
+                    <strong>Size:</strong> ${fileSize} MB<br>
+                    <strong>Type:</strong> ${file.type || "Unknown"}
+                `;
+          fileInfo.style.display = "block";
+          processButton.disabled = false;
+        } else {
+          fileInfo.style.display = "none";
+          processButton.disabled = true;
+        }
+      });
+
+      // Handle form submission
+      processButton.addEventListener("click", async function () {
+        if (!audioFile.files || !audioFile.files[0]) {
+          showError("Please select an audio file first.");
+          return;
+        }
+
+        const formData = new FormData();
+        formData.append("file", audioFile.files[0]);
+        formData.append("mix_ratio", mixRatio.value);
+
+        // Show loading state
+        loading.style.display = "block";
+        results.style.display = "none";
+        errorMessage.style.display = "none";
+        processButton.disabled = true;
+
+        try {
+          const response = await fetch("/upload", {
+            method: "POST",
+            body: formData,
+          });
+
+          const data = await response.json();
+
+          if (response.ok && data.success) {
+            displayResults(data);
+          } else {
+            showError(data.error || "Processing failed");
+          }
+        } catch (error) {
+          showError("Network error: " + error.message);
+        } finally {
+          loading.style.display = "none";
+          processButton.disabled = false;
+        }
+      });
+
+      function showError(message) {
+        errorMessage.textContent = message;
+        errorMessage.style.display = "block";
+      }
+
+      function displayResults(data) {
+        // Update statistics
+        document.getElementById("duration").textContent =
+          data.duration.toFixed(2);
+        document.getElementById("sampleRate").textContent =
+          data.sample_rate.toLocaleString();
+        document.getElementById("originalRms").textContent =
+          data.original_rms.toFixed(4);
+        document.getElementById("cleanedRms").textContent =
+          data.cleaned_rms.toFixed(4);
+        document.getElementById("noiseReduction").textContent =
+          data.noise_reduction_db.toFixed(2);
+
+        // Update plots (with fallback if plots failed to generate)
+        const waveformImg = document.getElementById("waveformPlot");
+        const frequencyImg = document.getElementById("frequencyPlot");
+
+        if (data.waveform_plot) {
+          waveformImg.src = "data:image/png;base64," + data.waveform_plot;
+          waveformImg.style.display = "block";
+        } else {
+          waveformImg.style.display = "none";
+          waveformImg.parentElement.innerHTML +=
+            '<p style="color: red;">Waveform plot generation failed</p>';
+        }
+
+        if (data.frequency_plot) {
+          frequencyImg.src = "data:image/png;base64," + data.frequency_plot;
+          frequencyImg.style.display = "block";
+        } else {
+          frequencyImg.style.display = "none";
+          frequencyImg.parentElement.innerHTML +=
+            '<p style="color: red;">Frequency plot generation failed</p>';
+        }
+
+        // Update download links
+        document.getElementById("downloadAntiSound").href =
+          "/download/" + data.anti_sound_file;
+        document.getElementById("downloadAntiSound").download =
+          data.filename + "_anti_sound.wav";
+
+        document.getElementById("downloadCleaned").href =
+          "/download/" + data.cleaned_audio_file;
+        document.getElementById("downloadCleaned").download =
+          data.filename + "_cleaned.wav";
+
+        // Show results
+        results.style.display = "block";
+      }
+    </script>
+  </body>
+</html>
