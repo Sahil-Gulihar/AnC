@@ -1,0 +1,12 @@
+{
+  "build": {
+    "env": {
+      "PYTHONUNBUFFERED": "1"
+    },
+    "command": "pip install -r requirements.txt"
+  },
+  "deploy": {
+    "startCommand": "python main.py",
+    "healthcheckPath": "/"
+  }
+}
