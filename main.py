@@ -252,6 +252,18 @@ ALLOWED_EXTENSIONS = {'wav', 'mp3', 'flac', 'ogg', 'm4a', 'aac'}
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
+def clear_directory(directory_path):
+    """Remove all files in a directory."""
+    if not os.path.isdir(directory_path):
+        return
+    for filename in os.listdir(directory_path):
+        file_path = os.path.join(directory_path, filename)
+        try:
+            if os.path.isfile(file_path) or os.path.islink(file_path):
+                os.unlink(file_path)
+        except Exception as e:
+            print(f'Failed to delete {file_path}. Reason: {e}')
+
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -259,6 +271,10 @@ def index():
 @app.route('/upload', methods=['POST'])
 def upload_file():
     try:
+        # Clear previous output files
+        clear_directory('static/output')
+        clear_directory(app.config['UPLOAD_FOLDER'])
+
         if 'file' not in request.files:
             return jsonify({'error': 'No file uploaded'}), 400
         
